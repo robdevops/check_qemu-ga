@@ -1,0 +1,62 @@
+#!/bin/bash
+
+[[ ! -x $(which virsh) ]] && printf "virsh not found in PATH.\n\n" >&2 && exit 3
+[[ -z $@ ]] && printf "Checks if qemu-agent guest-ping is responding. Run with sudo.\nUsage: $(basename $0) <VM list>\n\n" >&2 && exit 3
+DOMAINLIST=($@)
+
+domain_exist() {
+    virsh domstate --domain $DOMAIN > /dev/null 2>&1
+    return $?
+}
+
+domain_running() {
+    STATE=$(virsh domstate --domain $DOMAIN 2> /dev/null)
+    [[ ${STATE} == 'running' ]] && return 0
+}
+
+ping_domain() {
+    virsh qemu-agent-command --domain $DOMAIN --cmd '{"execute":"guest-ping"}' > /dev/null 2>&1
+    return $?
+}
+
+for DOMAIN in ${DOMAINLIST[@]}; do 
+    if domain_exist $DOMAIN; then
+        if domain_running $DOMAIN; then
+            if ping_domain $DOMAIN; then
+                SUCCESSFUL+=( $DOMAIN )
+
+            else
+                FAILED+=( $DOMAIN )
+
+            fi
+
+        else
+            NOTRUNNING+=( $DOMAIN )
+
+        fi
+
+    else
+        NOTEXIST+=( $DOMAIN )
+
+    fi
+
+done
+
+if [[ -n $NOTEXIST ]]; then
+    echo "WARNING: ${#NOTEXIST[@]} specified VM not found on this server: ${NOTEXIST[@]}."
+    exit 1
+
+elif [[ -n $FAILED ]]; then
+    echo "WARNING: ${#FAILED[@]} qemu-ga not responding: ${FAILED[@]}."
+    exit 1
+
+elif [[ -n $NOTRUNNING ]]; then
+    echo "WARNING: ${#NOTRUNNING[@]} specified VM not in running state: ${NOTRUNNING[@]}."
+    exit 1
+
+else
+    echo "OK: ${#SUCCESSFUL[@]} of ${#SUCCESSFUL[@]} qemu-ga responding: ${SUCCESSFUL[@]}."
+    exit 0
+
+fi
+
