@@ -5,17 +5,17 @@
 DOMAINLIST=($@)
 
 domain_exist() {
-    virsh domstate --domain $DOMAIN > /dev/null 2>&1
+    virsh domstate --domain $1 > /dev/null 2>&1
     return $?
 }
 
 domain_running() {
-    STATE=$(virsh domstate --domain $DOMAIN 2> /dev/null)
+    STATE=$(virsh domstate --domain $1 2> /dev/null)
     [[ ${STATE} == 'running' ]] && return 0
 }
 
 ping_domain() {
-    virsh qemu-agent-command --domain $DOMAIN --cmd '{"execute":"guest-ping"}' > /dev/null 2>&1
+    virsh qemu-agent-command --domain $1 --cmd '{"execute":"guest-ping"}' > /dev/null 2>&1
     return $?
 }
 
