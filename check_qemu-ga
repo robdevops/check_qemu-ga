@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+set -euo pipefail
 
 [[ ! -x $(which virsh) ]] && printf "virsh not found in PATH.\n\n" >&2 && exit 3
 [[ -z $@ ]] && printf "Checks if qemu-agent guest-ping is responding. Run with sudo.\nUsage: $(basename $0) <VM list>\n\n" >&2 && exit 3
