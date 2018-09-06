@@ -2,7 +2,7 @@
 check_qemu-ga plugin for Nagios / Icinga. Checks if the specified guest agents are responding.
 
 ## Dependencies
-* bash
+* bash 4.2
 * libvirt-client (virsh)
 * coreutils
 
