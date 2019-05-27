@@ -1,64 +1,63 @@
 #!/bin/bash
 set -euo pipefail
+IGNORED_DOMAINS=("")
+
 
 [[ ! -x $( which virsh ) ]] && printf "virsh not found in PATH.\n\n" >&2 && exit 3
 [[ ! $( whoami ) == 'root' ]] && printf "must run as root.\n\n" >&2 && exit 3
-[[ -z $@ ]] && printf "Checks if qemu-agent guest-ping is responding. Run with sudo.\nUsage: $( basename $0 ) <VM list>\n\n" >&2 && exit 3
-DOMAINLIST=($@)
 
-domain_exist() {
-    virsh domstate --domain $DOMAIN > /dev/null 2>&1
-    return $?
+while getopts ":hi:" opt; do
+    case $opt in
+      i  ) IFS=';' read -r -a IGNORED_DOMAINS <<< "$OPTARG" ;;
+      :  ) error "Option -$OPTARG requires an argument." ;;
+      \? ) error "Invalid option: -$OPTARG" ;;
+      h  ) printf "Checks if qemu-agent guest-ping is responding. Run with sudo.\nUsage: $( basename $0 ) [-i '<IGNORED VMs>']\nIgnored VMs should be semicolon separated.\n\n" >&2 && exit 3 ;;
+      *  ) usage ;;
+    esac
+done
+
+pingable() {
+	virsh qemu-agent-command --domain $DOMAIN --cmd '{"execute":"guest-ping"}' > /dev/null 2>&1
+	return $?
 }
 
-domain_running() {
-    STATE=$( virsh domstate --domain $DOMAIN 2> /dev/null )
-    [[ ${STATE} == 'running' ]] && return 0
+blacklisted() {
+	ElementIn "$DOMAIN" "${IGNORED_DOMAINS[@]}"
 }
 
-domain_pingable() {
-    virsh qemu-agent-command --domain $DOMAIN --cmd '{"execute":"guest-ping"}' > /dev/null 2>&1
-    return $?
+ElementIn() {
+	local element match="$1"
+	shift
+	for element; do 
+		[[ "$element" == "$match" ]] && return 0
+
+	done
+	return 1
+
 }
 
-for DOMAIN in ${DOMAINLIST[@]}; do 
-    if domain_exist; then
-        if domain_running; then
-            if domain_pingable; then
-                SUCCESSFUL+=( $DOMAIN )
 
-            else
-                FAILED+=( $DOMAIN )
+for DOMAIN in $( virsh list --name ); do 
+	if ! blacklisted; then
+		if pingable; then
+			SUCCESSFUL+=( $DOMAIN )
 
-            fi
+		else
+			FAILED+=( $DOMAIN )
 
-        else
-            NOTRUNNING+=( $DOMAIN )
+		fi
 
-        fi
-
-    else
-        NOTEXIST+=( $DOMAIN )
-
-    fi
+	fi
 
 done
 
-if [[ -v NOTEXIST ]]; then
-    echo "WARNING: ${#NOTEXIST[@]} specified VM not found on this server: ${NOTEXIST[@]}."
-    exit 1
-
-elif [[ -v FAILED ]]; then
-    echo "WARNING: ${#FAILED[@]} qemu-ga not responding: ${FAILED[@]}."
-    exit 1
-
-elif [[ -v NOTRUNNING ]]; then
-    echo "WARNING: ${#NOTRUNNING[@]} specified VM not in running state: ${NOTRUNNING[@]}."
-    exit 1
+if [[ -v FAILED ]]; then
+	echo "WARNING: ${#FAILED[@]} guests not responding: ${FAILED[@]}."
+	exit 1
 
 else
-    echo "OK: ${#SUCCESSFUL[@]} of ${#SUCCESSFUL[@]} qemu-ga responding: ${SUCCESSFUL[@]}."
-    exit 0
+	echo "OK: ${#SUCCESSFUL[@]} guests responding: ${SUCCESSFUL[@]}. "
+	exit 0
 
 fi
 

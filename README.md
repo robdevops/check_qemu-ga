@@ -19,34 +19,31 @@ icinga ALL=(root) NOPASSWD: /usr/local/sbin/check_qemu-ga
 
 ## Usage
 ```
-check_qemu-ga-mod <VM list>
+Usage: check_qemu-ga [-i '<IGNORED VMs>']
+Ignored VMs should be semicolon separated.
 ```
 
 ### Example output
+All guests responding:
 ```
-sudo /usr/local/sbin/check_qemu-ga helo stark snuffleupagus
-WARNING: 3 specified VM not in running state: helo stark snuffleupagus.
+sudo /usr/local/sbin/check_qemu-ga
+OK: 3 guests responding:: helo stark snuffleupagus.
+
+echo $?
+0
+```
+Some guests not responding:
+```
+sudo /usr/local/sbin/check_qemu-ga
+WARNING: 2 guests not responding: helo stark.
 
 echo $?
 1
 ```
+Ignoring guests:
 ```
-sudo /usr/local/sbin/check_qemu-ga sdfsdf
-WARNING: 1 VM do not exist on this server: sdfsdf.
-
-echo $?
-1
-```
-```
-sudo /usr/local/sbin/check_qemu-ga helo stark snuffleupagus
-WARNING: 3 VM not responding: helo stark snuffleupagus.
-
-echo $?
-1
-```
-```
-sudo /usr/local/sbin/check_qemu-ga helo stark snuffleupagus
-OK: 3 of 3 VM responding: helo stark snuffleupagus.
+sudo /usr/local/sbin/check_qemu-ga -i 'helo;stark'
+OK: 1 guests responding: snuffleupagus.
 
 echo $?
 0
