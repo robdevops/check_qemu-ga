@@ -27,7 +27,7 @@ Ignored VMs should be semicolon separated.
 All guests responding:
 ```
 sudo /usr/local/sbin/check_qemu-ga
-OK: 3 guests responding:: helo stark snuffleupagus.
+OK: 3 guests responding: helo stark snuffleupagus.
 
 echo $?
 0
