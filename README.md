@@ -1,5 +1,7 @@
 # check_qemu-ga
-check_qemu-ga is a plugin for Icinga and Nagios. It runs on a KVM hypervisor, and checks if all your libvirt qemu guest agents are responding, which can be important for consistent backups and other VM management tasks.
+check_qemu-ga is a plugin for Icinga and Nagios. It runs on a KVM hypervisor, and checks if all your libvirt qemu guest agents are responding.
+
+This can be important for consistent backups and other VM management tasks.
 
 ## Dependencies
 * bash 4.2
