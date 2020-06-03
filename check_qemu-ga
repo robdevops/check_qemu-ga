@@ -11,7 +11,7 @@ while getopts ":hi:" opt; do
 	  i  ) IFS=';' read -r -a IGNORED_DOMAINS <<< "$OPTARG" ;;
 	  :  ) error "Option -$OPTARG requires an argument." ;;
 	  \? ) error "Invalid option: -$OPTARG" ;;
-	  h  ) printf "Checks if qemu-agent guest-ping is responding. Run with sudo.\nUsage: $( basename $0 ) [-i '<IGNORED VMs>']\nIgnored VMs should be semicolon separated.\n\n" >&2 && exit 3 ;;
+	  h  ) printf "Checks if qemu-agent guest-ping is responding. Run with sudo.\nUsage: ${0##*/} [-i '<IGNORED VMs>']\nIgnored VMs should be semicolon separated.\n\n" >&2 && exit 3 ;;
 	  *  ) usage ;;
 	esac
 done
